@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<!-- head -->
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="jin" />
+		<meta name="date" content="" />
+		<title>{{movie['title']}}</title>
+		<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+		<link rel="stylesheet" href="{{url_for('static', filename='dist/css/output.css')}}" />
+	</head>
+
+	<!-- body -->
+	<body>
+		<nav id="navbar" class="w-full fixed z-40 transparent trasition duration-300">
+			<div class="px-4 md:px-16 py-6 flex flex-row items-center justify-between transition">
+				<h1
+					class="text-4xl font-extrabold text-red-600 cursor-pointer"
+					onclick="window.location.href = '/';"
+				>
+					CineMZ
+				</h1>
+
+				<input
+					type="search"
+					id="default-search"
+					class="block w-full pt-3 pb-[15px] px-6 pl-10 text-sm text-zinc-700 border border-zinc-500 rounded-full max-w-[384px] mx-8 bg-zinc-400 focus:bg-white transition placeholder-zinc-600 text-[14px] outline-none opacity-75"
+					placeholder="Search Movie..."
+				/>
+
+				<div class="flex flex-row items-center gap-2 cursor-pointer relative">
+					<div class="w-10 h-10 rounded-full overflow-hidden" id="profile-image">
+						<img
+							src="https://api.dicebear.com/6.x/fun-emoji/svg?seed={{nickname}}"
+							alt="user image"
+						/>
+					</div>
+					<div
+						id="logout-popup"
+						class="absolute top-10 right-0 bg-white px-2 py-1 rounded-lg shadow-lg hidden"
+					>
+						<button
+							class="cursor-pointer text-gray-600 text-[13px] font-semibold min-w-[88px] shadow-md"
+							id="logout-button"
+						>
+							로그아웃
+						</button>
+					</div>
+				</div>
+			</div>
+		</nav>
+		<div class="relative h-[56.25vw] max-h-[768px]">
+			<img
+				class="w-full h-[56.25vw] max-h-[768px] object-cover transition duration-500 brightness-[50%]"
+				src='https://image.tmdb.org/t/p/w780{{movie["backdrop_path"]}}'
+				width="100%"
+				frameborder="0"
+				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
+				picture-in-picture"
+				allowfullscreen
+			/>
+
+			<div class="absolute top-[25%] sm:top-[15%] md:top-[40%] ml-4 md:ml-16">
+				<p
+					class="text-white text-xl md:text-5xl h-full w-[65%] lg:text-6xl font-bold drop-shadow break-keep ml-1"
+					style="text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.65)"
+				>
+					{{movie["title"]}}<span class="text-white text-md md:text-4xl lg:text-5xl font-semibold">({{movie['release_date'][0:4]}})</span>
+				</p>
+				<p
+					class="text-gray-300 text-[8px] md:text-lg mt-3 md:mt-8 w-[90%] md:w-[80%] lg:w-[50%] drop-shadow-xl ml-1"
+					style="text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.65)"
+				>
+					{{movie["overview"]}}
+				</p>
+		</div>
+        <div class="mt-10 p-4 md:px-16">
+            <h2 class="text-white text-md md:text-2xl lg:text-3xl font-semibold mb-6 ml-1">평가 남기기 ✏️</h2>
+            <div class="relative mt-4 flex flex-col items-start">
+              <textarea
+                class="w-full p-3 h-28 rounded-md transition outline-none resize-none bg-zinc-600 text-zinc-300 placeholder:text-zinc-400"
+				id="comment"
+                placeholder="댓글을 남겨보세요..."
+              ></textarea>
+			  <input type="hidden" id="movie_id" value="{{movie['id']}}" />
+              <button
+                class="absolute right-3 bottom-3 px-4 py-2 text-sm text-white font-semibold bg-red-600 hover:bg-red-700 rounded-md cursor-pointer transition"
+				onclick="insertComment('{{nickname}}')"
+              >
+                등록하기
+              </button>
+            </div>
+			<div id="comment_list" class="mt-8"></div>
+          </div>
+          
+          
+
+		<script>
+			window.onload = () => {
+				show_comment(); // 댓글 불러오기
+			};
+
+			// 댓글 불러오기
+			function show_comment() {
+				fetch("/comment/movie/{{movie['id']}}")
+					.then((res) => res.json())
+					.then((data) => {
+						let comments = data["result"];
+						$("#comments_list").empty();
+						comments.forEach((a) => {
+							let user = a["user"];
+							let comment = a["comment"];
+							let movie = a["movie"];
+							let commentId = a["commentId"];
+
+							const toDay = new Date();
+							const toDayD = toDay.getTime();
+
+							let divide = 1000 * 60 * 60 * 24;
+							let date = (toDayD - commentId) / divide;
+							let day = String(Math.floor(date));
+							let hour = String(Math.floor((date - day) * 24));
+							let minute = String(Math.floor(((date - day) * 24 - hour) * 60));
+							let second = String(Math.floor((((date - day) * 24 - hour) * 60 - minute) * 60));
+							let time;
+
+							if (hour < 1) {
+								if (minute < 1) {
+									time = second + "초전";
+								} else {
+									time = minute + "분전";
+								}
+							} else {
+								time = hour + "시간전";
+							}
+
+							let temp_html = "";
+
+							// 로그인 한 유저와 댓글을 작성한 유저의 아이디를 비교 후 수정,삭제 또는 좋아요, 싫어요 버튼 출력
+							if (user === "{{nickname}}") {
+								temp_html = `
+								<hr class="h-px my-10 bg-gray-200 border-0 dark:bg-gray-700">
+								<br/>
+								<div class="flex justfy-between font-bold text-white">
+										<div id="id${commentId}">
+											<p><small>${time}</small></p>
+												<h4>${user}</h4>
+												${comment}
+												<p><small><a class="cursor-pointer" onclick="updateComment('${commentId}','${comment}','${user}')">수정</a> - <a class="cursor-pointer" onclick="deleteComment('${commentId}')">삭제</a></small></p>
+										</div>
+									</div>
+									<br/>
+			             `;
+							} else {
+								temp_html = `
+								<hr class="h-px my-10 bg-gray-200 border-0 dark:bg-gray-700">
+								<br/>
+								<div class="flex justfy-between font-bold text-white">
+										<div id="id${commentId}">
+											<p><small>${time}</small></p>
+												<h4>${user}</h4>
+												${comment}
+										</div>
+									</div>
+									<br/>
+			             `;
+							}
+							$("#comment_list").append(temp_html);
+						});
+					});
+			}
+
+			//  댓글 입력
+			function insertComment(nickname) {
+				// 댓글 작성하는 사람의 키 값 입력
+				let comment = document.getElementById("comment").value;
+				let user = nickname;
+				let movie_id = document.getElementById("movie_id").value
+				let commentId = Date.now();
+
+				let formData = new FormData();
+				formData.append("comment_give", comment);
+				formData.append("user_id_give", user);
+				formData.append("movie_id_give", movie_id);
+				formData.append("comment_id_give", commentId);
+
+				if (comment === "") {
+					alert("댓글을 입력하세요!");
+				} else {
+					fetch("/comment", { method: "POST", body: formData })
+						.then((res) => res.json())
+						.then((data) => {
+							alert("등록 완료!");
+							window.location.reload();
+						});
+				}
+			}
+
+			//  댓글 삭제
+			function deleteComment(commentId) {
+				if(confirm("정말 삭제하시겠습니까?")){
+					let formData = new FormData();
+					formData.append("commentId", commentId);
+	
+					fetch("/comment/delete", { method: "DELETE", body: formData })
+						.then((res) => res.json())
+						.then((data) => {
+							alert("삭제가 완료되었습니다");
+							window.location.reload();
+						});
+				} else {
+					alert("취소합니다");
+				}
+			}
+
+			//  댓글 수정 버튼 클릭 시 내용 출력되는 div -> textarea로 변경 후 수정 작업 처리
+			function updateComment(commentId, comment, user) {
+				$("#id" + commentId).html(`
+			     <h4 class="media-heading user_name">${user}</h4>
+			     <textarea id="change" style="color: black" rows="2">${comment}</textarea>
+			     <p><small><a onclick="changeComment('${commentId}')" style="cursor:pointer">수정</a> - <a onclick="window.location.reload()" style="cursor:pointer">취소</a></small></p>`);
+			}
+
+			//  댓글 수정
+			function changeComment(commentId) {
+				let cont = document.getElementById("change").value;
+				let formData = new FormData();
+				formData.append("commentId", commentId);
+				formData.append("comment", cont);
+
+				fetch("/comment/update", { method: "POST", body: formData })
+					.then((res) => res.json())
+					.then((data) => {
+						alert("수정 완료!");
+						window.location.reload();
+					});
+			}
+
+			window.addEventListener("scroll", () => {
+				const navbar = document.getElementById("navbar");
+				if (window.scrollY > 80) {
+					navbar.classList.remove("transparent");
+					navbar.classList.add("bg-zinc-900");
+					navbar.classList.add("bg-opacity-90");
+				} else {
+					navbar.classList.remove("bg-zinc-900");
+					navbar.classList.remove("bg-opacity-95");
+					navbar.classList.add("transparent");
+				}
+			});
+
+			document.getElementById("profile-image").addEventListener("click", () => {
+				const popup = document.getElementById("logout-popup");
+				if (popup.classList.contains("hidden")) {
+					popup.classList.remove("hidden");
+				} else {
+					popup.classList.add("hidden");
+				}
+			});
+
+			document.getElementById("logout-button").addEventListener("click", () => {
+				document.cookie = "mytoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+				window.location.href = "/login";
+			});
+
+			window.addEventListener("click", (e) => {
+				const container = document.getElementById("profile-container");
+				if (!container.contains(e.target)) {
+					document.getElementById("logout-popup").classList.add("hidden");
+				}
+			});
+
+			document.getElementById("default-search").addEventListener("keyup", function (event) {
+				if (event.keyCode === 13) {
+					const searchValue = this.value;
+					if (!searchValue.length) return;
+					window.location.href = `/search?query=${encodeURIComponent(searchValue)}`;
+				}
+			});
+
+		</script>
+	</body>
+
+	<!-- script -->
+</html>

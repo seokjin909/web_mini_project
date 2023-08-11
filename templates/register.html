@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<title>CineMZ Register Page | 16</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+		<script>
+			window.onload = function () {
+				document.getElementById("register-button").addEventListener("click", register);
+				document.getElementById("toggle-button").addEventListener("click", () => {
+					window.location.href = "/login";
+				});
+				document.addEventListener("keypress", function (event) {
+					if (event.key === "Enter") {
+						login();
+					}
+				});
+			};
+
+			async function register() {
+				try {
+					const userId = document.getElementById("userid").value;
+					const userPw = document.getElementById("userpw").value;
+					const userNick = document.getElementById("usernick").value;
+					const errorMessage = document.getElementById("error-message");
+
+					// 오류 메시지 초기화
+					errorMessage.textContent = "";
+
+					// 유효성 검사
+					if (userNick.length < 2 || userNick.length > 10) {
+						errorMessage.textContent = "닉네임은 2~10자 사이여야 합니다.";
+						return;
+					}
+
+					if (userId.length < 4 || userId.length > 16) {
+						errorMessage.textContent = "아이디는 4~16자 사이여야 합니다.";
+						return;
+					}
+
+					if (userPw.length < 8) {
+						errorMessage.textContent = "비밀번호는 최소 8자 이상이어야 합니다.";
+						return;
+					}
+
+					const payload = {
+						id_give: userId,
+						pw_give: userPw,
+						nickname_give: userNick,
+					};
+
+					const response = await fetch("/api/register", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(payload),
+					});
+
+					const data = await response.json();
+
+					if (data.result === "success") {
+						return (window.location.href = "/login");
+					}
+					if (data.msg.includes("duplicate")) {
+						// 중복된 아이디 또는 닉네임이 있는 경우
+						errorMessage.textContent = "이미 사용 중인 아이디나 닉네임입니다.";
+					}
+				} catch (error) {
+					console.error("An error occurred during registration:", error);
+				}
+			}
+		</script>
+		<link rel="stylesheet" href="{{url_for('static', filename='dist/css/output.css')}}" />
+	</head>
+	<body>
+		<div
+			class="relative h-full w-full bg-no-repeat bg-center bg-fixed bg-cover"
+			style="background-image: url({{ url_for('static', filename='img/hero.jpeg') }})"
+		>
+			<div class="bg-black w-full h-full lg:bg-opacity-50">
+				<nav class="px-12 py-5">
+					<h1 class="text-[42px] font-extrabold text-[#E50914] cursor-pointer">CineMZ</h1>
+				</nav>
+
+				<div class="flex justify-center">
+					<div
+						class="bg-black bg-opacity-75 px-16 py-14 self-center mt-12 lg:w2/5 lg:max-w-md rounded-md w-full"
+					>
+						<h2 class="text-white text-[32px] mb-8 font-base">회원가입</h2>
+						<div class="flex flex-col gap-4">
+							<div id="error-message" class="text-red-500 mb-1"></div>
+							<div class="relative">
+								<input
+									type="text"
+									id="usernick"
+									class="block rounded-[4px] px-6 pt-5 pb-[10px] w-full text-md text-white bg-[#333333] appearance-none focus:outline-none focus:ring-0 peer"
+									placeholder=" "
+								/>
+								<label
+									htmlFor="textt"
+									class="absolute text-[14px] text-[#8C8C8C] transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-6 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 transition"
+									>닉네임</label
+								>
+							</div>
+							<div class="relative">
+								<input
+									type="text"
+									id="userid"
+									class="block rounded-[4px] px-6 pt-5 pb-[10px] w-full text-md text-white bg-[#333333] appearance-none focus:outline-none focus:ring-0 peer"
+									placeholder=" "
+								/>
+								<label
+									htmlFor="text"
+									class="absolute text-[14px] text-[#8C8C8C] transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-6 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 transition"
+									>아이디</label
+								>
+							</div>
+							<div class="relative">
+								<input
+									type="password"
+									id="userpw"
+									class="block rounded-[4px] px-6 pt-5 pb-[10px] w-full text-md text-white bg-[#333333] appearance-none focus:outline-none focus:ring-0 peer"
+									placeholder=" "
+								/>
+								<label
+									htmlFor="password"
+									class="absolute text-[14px] text-[#8C8C8C] transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-6 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 transition"
+									>비밀번호</label
+								>
+							</div>
+							<button
+								class="bg-[#E50913] py-3 text-white rounded-md w-full mt-6 transition text-[15px] hover:bg-red-600"
+								id="register-button"
+							>
+								가입하기
+							</button>
+							<p class="text-neutral-500 text-[13px] w-full text-center">
+								이미 회원이신가요?
+								<span
+									class="text-white ml-1 hover:underline cursor-pointer transition"
+									id="toggle-button"
+									>로그인하러가기</span
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

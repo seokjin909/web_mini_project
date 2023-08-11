@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<!-- head -->
+	<head>
+		<title>CineMZ Page | 16</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+		<link rel="stylesheet" href="{{url_for('static', filename='dist/css/output.css')}}" />
+		<style>
+			.transparent {
+				background-color: transparent !important;
+			}
+			.dark {
+				background-color: rgba(0, 0, 0, 0.9) !important;
+			}
+		</style>
+	</head>
+
+	<!-- body -->
+	<body>
+		<nav id="navbar" class="w-full fixed z-40 transparent trasition duration-300">
+			<div class="px-4 md:px-16 py-6 flex flex-row items-center justify-between transition">
+				<h1
+					class="text-4xl font-extrabold text-red-600 cursor-pointer"
+					onclick="window.location.href = '/';"
+				>
+					CineMZ
+				</h1>
+
+				<input
+					type="search"
+					id="default-search"
+					class="block w-full pt-3 pb-[15px] px-6 pl-10 text-sm text-zinc-700 border border-zinc-500 rounded-full max-w-[384px] mx-8 bg-zinc-400 focus:bg-white transition placeholder-zinc-600 text-[14px] outline-none opacity-75"
+					placeholder="Search Movie..."
+				/>
+
+				<div class="flex flex-row items-center gap-2 cursor-pointer relative">
+					<div class="w-10 h-10 rounded-full overflow-hidden" id="profile-image">
+						<img
+							src="https://api.dicebear.com/6.x/fun-emoji/svg?seed={{nickname}}"
+							alt="user image"
+						/>
+					</div>
+					<div
+						id="logout-popup"
+						class="absolute top-10 right-0 bg-white px-2 py-1 rounded-lg shadow-lg hidden"
+					>
+						<button
+							class="cursor-pointer text-gray-600 text-[13px] font-semibold min-w-[88px] shadow-md"
+							id="logout-button"
+						>
+							로그아웃
+						</button>
+					</div>
+				</div>
+			</div>
+		</nav>
+		<div class="text-white fixed top-32 px-4 md:px-16">
+			<p class="text-gray-50 text-md md:text-2xl lg:text-3xl font-semibold mb-6 w-full">
+				"{{query[:32]}}"에 대한 상위 검색결과  🔍
+			</p>
+			{% if not count%}
+			<div class="w-[100vw] text-center text-lg text-zinc-300 mt-16">
+				죄송해요. 😥 요청하신 검색결과가 없어요.
+			</div>
+			{%else%}
+			<div class="grid grid-cols-4 gap-2">
+				{% for movie in movies %}
+				<div
+					class="group bg-zinc-900 col-span relative h-[12vw] mb-[16px] md:mb-[52px] lg:mb-[74px]"
+					onclick="window.location.href = '/movie/{{ movie['id'] }}';"
+				>
+					<img
+						src='https://image.tmdb.org/t/p/w500{{movie["backdrop_path"]}}'
+						class="cursor-pointer object-cover transition duration shadow-xl rounded-t-md group-hover:opacity-70 delay-50 w-full h-[12vw]"
+						alt="thumbnail"
+					/>
+					<div
+						class="z-10 bg-zinc-800 p-2 lg:p-4 absolute w-full transition shadow-md rounded-b-md text-white invisible lg:visible"
+					>
+						<div class="flex flex-col">
+							<div class="flex flex-row items-center gap-3">
+								<div class="cursor-pointer text-[11px] text-red-500">HOT</div>
+								<div class="cursor-pointer flex items-center text-[14px]">
+									{{movie['title']}}<span class="ml-2 text-[12px] text-gray-300"
+										>{{movie['release_date'][0:4]}}</span
+									>
+								</div>
+							</div>
+							<div class="flex gap-2 mt-1">
+								<div class="text-[11px] text-zinc-300">
+									⭐️ {{movie['vote_average']}}<span class="text-[10px]">
+										({{movie['vote_count']}})</span
+									>
+								</div>
+								<div class="text-[11px] text-zinc-300">자세히보기</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				{% endfor %}{%endif%}
+			</div>
+		</div>
+
+		<script>
+			window.addEventListener("scroll", function () {
+				const navbar = document.getElementById("navbar");
+				if (window.scrollY > 192) {
+					navbar.classList.remove("transparent");
+					navbar.classList.add("bg-zinc-900");
+					navbar.classList.add("bg-opacity-90");
+				} else {
+					navbar.classList.remove("bg-zinc-900");
+					navbar.classList.remove("bg-opacity-95");
+					navbar.classList.add("transparent");
+				}
+			});
+
+			document.getElementById("profile-image").addEventListener("click", function () {
+				const popup = document.getElementById("logout-popup");
+				if (popup.classList.contains("hidden")) {
+					popup.classList.remove("hidden");
+				} else {
+					popup.classList.add("hidden");
+				}
+			});
+
+			document.getElementById("logout-button").addEventListener("click", function () {
+				document.cookie = "mytoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+				window.location.href = "/login";
+			});
+
+			window.addEventListener("click", function (e) {
+				const container = document.getElementById("profile-container");
+				if (!container.contains(e.target)) {
+					document.getElementById("logout-popup").classList.add("hidden");
+				}
+			});
+
+			document.getElementById("default-search").addEventListener("keyup", function (event) {
+				if (event.keyCode === 13) {
+					const searchValue = this.value;
+					if (!searchValue.length) return;
+					window.location.href = `/search?query=${encodeURIComponent(searchValue)}`;
+				}
+			});
+		</script>
+	</body>
+</html>
